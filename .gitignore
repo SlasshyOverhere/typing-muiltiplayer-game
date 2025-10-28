@@ -1,0 +1,142 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*CHANGELOG.md
+*IMPROVEMENTS.md    
+
+# package-lock.json
+package-lock.json
+# QUICKSTART.md
+QUICKSTART.md
+# SETUP.md
+SETUP.md
+# README.md
+README.md   
+# LICENSE
+LICENSE
+# CODE_OF_CONDUCT.md
+CODE_OF_CONDUCT.md
+# CONTRIBUTING.md
+CONTRIBUTING.md
+# SECURITY.md
+SECURITY.md
+# SUPPORT.md
+SUPPORT.md
+# CHANGELOG.md
+CHANGELOG.md
+# IMPROVEMENTS.md
+IMPROVEMENTS.md
+# QUICKSTART.md
+QUICKSTART.md
+# SETUP.md
+SETUP.md
+# README.md
+README.md   
+
+# .env.local
+.env.local
+# .env
+.env
+# .env.development.local
+.env.development.local
+# .env.test.local
+.env.test.local
+# .env.production.local
+.env.production.local
+# .env.development
+.env.development        
+
+# .env.test
+.env.test
+# .env.production
+.env.production
+# .env.local
+.env.local
+# .env.development.local
+.env.development.local
+# .env.test.local
+.env.test.local
+# .env.production.local
+.env.production.local   
+
+# .env.local
+.env.local
+# .env.development.local
+.env.development.local
+# .env.test.local
+.env.test.local
+# .env.production.local
+.env.production.local   
+
+# .env.local
+.env.local
+# .env.development.local
+.env.development.local  
+
+# .env.local
+.env.local
+# .env.development.local
+.env.development.local
+# .env.test.local
+.env.test.local
+# .env.production.local
+.env.production.local   
+
+# .env.local
+.env.local
+# .env.development.local
+.env.development.local          
+
+*SETUP.md
+*QUICKSTART.md
+*README.md
+*CHANGELOG.md
+*IMPROVEMENTS.md
+*LICENSE
+*CODE_OF_CONDUCT.md
+*CONTRIBUTING.md
+*SECURITY.md
+*SUPPORT.md
+*CHANGELOG.md
+*IMPROVEMENTS.md
