@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Game } from '@/lib/types';
 import { useToast } from './use-toast';
+import { API_URL } from '@/lib/api-config';
 
 export function useGame(roomId: string) {
   const [game, setGame] = useState<Game | null>(null);
@@ -14,7 +15,7 @@ export function useGame(roomId: string) {
     if (!roomId) return;
 
     try {
-      const response = await fetch(`/api/games/${roomId}`);
+      const response = await fetch(`${API_URL}/api/games/${roomId}`);
       
       if (!response.ok) {
         if (response.status === 404) {

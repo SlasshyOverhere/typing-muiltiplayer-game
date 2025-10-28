@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
 import { resetGame, startGame, joinGameClient } from '@/app/actions';
+import { API_URL } from '@/lib/api-config';
 
 export default function GameContainer({
   roomId,
@@ -42,7 +43,7 @@ export default function GameContainer({
       
       // Auto-transition to playing state after countdown
       const transitionTimer = setTimeout(async () => {
-        await fetch(`/api/games/${roomId}`, {
+        await fetch(`${API_URL}/api/games/${roomId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

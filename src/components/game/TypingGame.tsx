@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Target, Crown, Trash2 } from 'lucide-react';
 import { disbandGame } from '@/app/actions';
+import { API_URL } from '@/lib/api-config';
 
 interface TypingGameProps {
   game: Game;
@@ -91,7 +92,7 @@ export default function TypingGame({
       if (game.gameState !== 'playing') return;
       
       // Update progress and WPM
-      await fetch(`/api/games/${game.id}/update-player`, {
+      await fetch(`${API_URL}/api/games/${game.id}/update-player`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +113,7 @@ export default function TypingGame({
         const finalScore = currentWpm * (currentAccuracy / 100) ** 2;
         
         // Update this player's final stats
-        await fetch(`/api/games/${game.id}/update-player`, {
+        await fetch(`${API_URL}/api/games/${game.id}/update-player`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -128,7 +129,7 @@ export default function TypingGame({
         });
 
         // Fetch updated game to check if should end
-        const gameResponse = await fetch(`/api/games/${game.id}`);
+        const gameResponse = await fetch(`${API_URL}/api/games/${game.id}`);
         const updatedGame: Game = await gameResponse.json();
         
         // Check finished players - use >= 99 to handle floating point precision
@@ -152,7 +153,7 @@ export default function TypingGame({
 
           console.log('[TypingGame] Ending game. Winner:', winnerId, 'Score:', highScore);
 
-          await fetch(`/api/games/${game.id}`, {
+          await fetch(`${API_URL}/api/games/${game.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

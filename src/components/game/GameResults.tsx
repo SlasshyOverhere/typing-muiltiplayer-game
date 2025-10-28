@@ -23,6 +23,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
+import { API_URL } from '@/lib/api-config';
 
 interface GameResultsProps {
   players: Player[];
@@ -71,7 +72,7 @@ export default function GameResults({
     
     const currentVotes = { ...rematchVotes, [localPlayerId]: vote };
     
-    await fetch(`/api/games/${roomId}`, {
+    await fetch(`${API_URL}/api/games/${roomId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
