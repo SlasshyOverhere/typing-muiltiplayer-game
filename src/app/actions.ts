@@ -2,18 +2,20 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { API_URL } from '@/lib/api-config';
 
-// Use backend URL from environment or localhost
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-export async function createGame(playerName: string) {
+export async function createGame(playerName: string, password?: string) {
   console.log('[CreateGame] Starting game creation for:', playerName);
   
   try {
     const response = await fetch(`${API_URL}/api/games`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ playerName }),
+      body: JSON.stringify({ 
+        playerName, 
+        password: password || undefined,
+        isPublic: !password 
+      }),
     });
 
     if (!response.ok) {
@@ -30,12 +32,12 @@ export async function createGame(playerName: string) {
   }
 }
 
-export async function joinGame(roomId: string, playerName: string) {
+export async function joinGame(roomId: string, playerName: string, password?: string) {
   try {
     const response = await fetch(`${API_URL}/api/games/${roomId}/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ playerName }),
+      body: JSON.stringify({ playerName, password }),
     });
 
     if (!response.ok) {

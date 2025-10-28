@@ -13,7 +13,7 @@ app.use(express.json());
 const games = new Map();
 
 // Helper function to generate room ID
-const generateRoomId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+const generateRoomId = () => Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit number (1000-9999)
 
 // Helper function to generate player ID
 const generatePlayerId = () => {
@@ -83,7 +83,7 @@ app.get('/api/games/:gameId', (req, res) => {
 // Create new game
 app.post('/api/games', (req, res) => {
   try {
-    const { playerName } = req.body;
+    const { playerName, password, isPublic = false } = req.body;
     
     if (!playerName) {
       return res.status(400).json({ error: 'Player name required' });
@@ -110,10 +110,13 @@ app.post('/api/games', (req, res) => {
       players: { [playerId]: newPlayer },
       textSnippet: 'The quick brown fox jumps over the lazy dog.',
       createdAt: new Date().toISOString(),
+      password: password || undefined,
+      isPublic: isPublic,
+      maxPlayers: 20,
     };
     
     games.set(roomId, newGame);
-    console.log(`[Create] New game: ${roomId} by ${playerName}`);
+    console.log(`[Create] New game: ${roomId} by ${playerName} (${isPublic ? 'Public' : 'Private'})`);
     
     res.status(201).json({ roomId, playerId, game: newGame });
   } catch (error) {
@@ -122,11 +125,97 @@ app.post('/api/games', (req, res) => {
   }
 });
 
+// Find or create public room for matchmaking
+app.post('/api/games/matchmaking', (req, res) => {
+  try {
+    const { playerName } = req.body;
+    
+    if (!playerName) {
+      return res.status(400).json({ error: 'Player name required' });
+    }
+    
+    // Find an available public room (waiting state, not full)
+    let availableRoom = null;
+    for (const [roomId, game] of games.entries()) {
+      if (game.isPublic && 
+          game.gameState === 'waiting' && 
+          Object.keys(game.players).length < game.maxPlayers) {
+        availableRoom = game;
+        break;
+      }
+    }
+    
+    // If no room found, create a new public room
+    if (!availableRoom) {
+      const playerId = generatePlayerId();
+      const roomId = generateRoomId();
+      
+      const newPlayer = {
+        id: playerId,
+        name: playerName,
+        isHost: true,
+        progress: 0,
+        wpm: 0,
+        accuracy: 100,
+        score: 0,
+        finishTime: null,
+      };
+      
+      const newGame = {
+        id: roomId,
+        gameState: 'waiting',
+        hostId: playerId,
+        players: { [playerId]: newPlayer },
+        textSnippet: 'The quick brown fox jumps over the lazy dog.',
+        createdAt: new Date().toISOString(),
+        password: undefined,
+        isPublic: true,
+        maxPlayers: 20,
+      };
+      
+      games.set(roomId, newGame);
+      availableRoom = newGame;
+      
+      console.log(`[Matchmaking] Created new public room: ${roomId} by ${playerName}`);
+    } else {
+      // Join existing room
+      const playerId = generatePlayerId();
+      
+      const newPlayer = {
+        id: playerId,
+        name: playerName,
+        isHost: false,
+        progress: 0,
+        wpm: 0,
+        accuracy: 100,
+        score: 0,
+        finishTime: null,
+      };
+      
+      availableRoom.players[playerId] = newPlayer;
+      games.set(availableRoom.id, availableRoom);
+      
+      console.log(`[Matchmaking] ${playerName} joined public room: ${availableRoom.id}`);
+    }
+    
+    res.json({ 
+      roomId: availableRoom.id, 
+      playerId: Object.keys(availableRoom.players).find(id => 
+        availableRoom.players[id].name === playerName
+      ),
+      game: availableRoom 
+    });
+  } catch (error) {
+    console.error('Error in matchmaking:', error);
+    res.status(500).json({ error: 'Failed to find/create room' });
+  }
+});
+
 // Join existing game
 app.post('/api/games/:gameId/join', (req, res) => {
   try {
     const { gameId } = req.params;
-    const { playerName } = req.body;
+    const { playerName, password } = req.body;
     
     const game = games.get(gameId);
     
@@ -134,7 +223,12 @@ app.post('/api/games/:gameId/join', (req, res) => {
       return res.status(404).json({ error: 'Game not found' });
     }
     
-    if (Object.keys(game.players).length >= 3) {
+    // Check password for private rooms
+    if (game.password && game.password !== password) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+    
+    if (Object.keys(game.players).length >= game.maxPlayers) {
       return res.status(400).json({ error: 'Room is full' });
     }
     
@@ -269,6 +363,75 @@ app.patch('/api/games/:gameId/update-player', (req, res) => {
   }
 });
 
+// Surrender (player gives up)
+app.post('/api/games/:gameId/surrender', (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { playerId } = req.body;
+    
+    const game = games.get(gameId);
+    
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    
+    if (!playerId || !game.players[playerId]) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+    
+    // Mark player as surrendered
+    game.players[playerId].surrendered = true;
+    game.players[playerId].finishTime = null; // DNF
+    game.players[playerId].score = 0; // No score for surrendering
+    
+    console.log(`[Surrender] Player ${game.players[playerId].name} surrendered in game ${gameId}`);
+    
+    // Get active (non-surrendered) players
+    const activePlayers = Object.values(game.players).filter(p => !p.surrendered);
+    const finishedPlayers = activePlayers.filter(p => p.progress >= 99);
+    
+    console.log(`[Surrender] Active players: ${activePlayers.length}, Finished: ${finishedPlayers.length}`);
+    
+    // End game if:
+    // 1. Only 1 or 0 active players left (others surrendered)
+    // 2. All remaining active players finished
+    if (activePlayers.length <= 1 || (activePlayers.length > 0 && activePlayers.every(p => p.progress >= 99))) {
+      let winnerId = null;
+      
+      if (activePlayers.length === 1) {
+        // Only 1 player left - they win automatically
+        winnerId = activePlayers[0].id;
+        console.log(`[Surrender] Only 1 player left: ${activePlayers[0].name} wins automatically`);
+      } else if (activePlayers.length > 1) {
+        // Multiple players finished - find highest score
+        let highScore = 0;
+        for (const player of activePlayers) {
+          if (player.score > highScore) {
+            highScore = player.score;
+            winnerId = player.id;
+          }
+        }
+        console.log(`[Surrender] Multiple players finished, winner by score: ${winnerId}`);
+      } else {
+        // All players surrendered - no winner
+        console.log(`[Surrender] All players surrendered - no winner`);
+      }
+      
+      game.gameState = 'finished';
+      game.winnerId = winnerId;
+      
+      console.log(`[Surrender] Game ended: ${gameId}, Winner: ${winnerId || 'None'}`);
+    }
+    
+    games.set(gameId, game);
+    
+    res.json(game);
+  } catch (error) {
+    console.error('Error processing surrender:', error);
+    res.status(500).json({ error: 'Failed to process surrender' });
+  }
+});
+
 // Reset game
 app.post('/api/games/:gameId/reset', (req, res) => {
   try {
@@ -289,6 +452,7 @@ app.post('/api/games/:gameId/reset', (req, res) => {
         accuracy: 100,
         score: 0,
         finishTime: null,
+        surrendered: false,
       };
     }
     

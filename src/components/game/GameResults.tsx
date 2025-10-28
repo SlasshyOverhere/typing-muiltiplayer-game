@@ -83,21 +83,58 @@ export default function GameResults({
     setHasVoted(true);
   };
 
+  const handleLeave = () => {
+    // Go to waiting room (homepage) for next match
+    window.location.href = '/';
+  };
+
   const handleSaveScreenshot = async () => {
     if (!cardRef.current) return;
     
     setIsDownloading(true);
     try {
-      // Capture the card as a canvas
+      // Capture the card as a canvas with high quality settings
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#222222',
-        scale: 2, // Higher quality
+        backgroundColor: '#0a0a0a', // Dark background
+        scale: 3, // Very high quality (3x)
         logging: false,
         useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true,
+        width: cardRef.current.offsetWidth,
+        height: cardRef.current.offsetHeight,
+        scrollX: 0,
+        scrollY: 0,
       });
       
+      // Create a new canvas with watermark
+      const finalCanvas = document.createElement('canvas');
+      const ctx = finalCanvas.getContext('2d');
+      
+      // Set final canvas size (add space for watermark)
+      finalCanvas.width = canvas.width + 40;
+      finalCanvas.height = canvas.height + 80;
+      
+      // Fill with dark background
+      ctx!.fillStyle = '#0a0a0a';
+      ctx!.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+      
+      // Draw the main content
+      ctx!.drawImage(canvas, 20, 20);
+      
+      // Add watermark
+      ctx!.fillStyle = '#8b5cf6'; // Purple color
+      ctx!.font = 'bold 24px Arial';
+      ctx!.textAlign = 'center';
+      ctx!.fillText('Type Royale', finalCanvas.width / 2, finalCanvas.height - 20);
+      
+      // Add subtitle
+      ctx!.fillStyle = '#a1a1aa';
+      ctx!.font = '14px Arial';
+      ctx!.fillText('Multiplayer Typing Challenge', finalCanvas.width / 2, finalCanvas.height - 5);
+      
       // Convert to blob and download
-      canvas.toBlob((blob) => {
+      finalCanvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -109,10 +146,10 @@ export default function GameResults({
           
           toast({
             title: 'Screenshot Saved!',
-            description: 'Your game results have been downloaded as a PNG.',
+            description: 'Your game results have been downloaded as a high-quality PNG.',
           });
         }
-      });
+      }, 'image/png', 1.0); // Maximum quality
     } catch (error) {
       console.error('Screenshot error:', error);
       toast({
@@ -149,16 +186,18 @@ export default function GameResults({
           <CardTitle className="font-headline text-4xl mt-4 neon-text">
             Game Over!
           </CardTitle>
-          {winner ? (
-            <CardDescription className="text-xl mt-2">
-              Winner is{' '}
-              <span className="font-bold text-accent">{winner.name}</span>!
-            </CardDescription>
-          ) : (
-            <CardDescription className="text-xl mt-2">
-              It&apos;s a draw!
-            </CardDescription>
-          )}
+              {winner ? (
+                <CardDescription className="text-xl mt-2">
+                  Winner is{' '}
+                  <span className="font-bold text-accent">{winner.name}</span>!
+                </CardDescription>
+              ) : (
+                <CardDescription className="text-xl mt-2">
+                  {players.some(p => p.surrendered) && !players.some(p => !p.surrendered) 
+                    ? "Everyone surrendered - No winner!" 
+                    : "It's a draw!"}
+                </CardDescription>
+              )}
         </div>
       </CardHeader>
       <CardContent>
@@ -178,40 +217,53 @@ export default function GameResults({
             <TableBody>
               {sortedPlayers.map((player, index) => {
                 const isWinner = player.id === winnerId;
-                const finishTimeDisplay = player.finishTime 
-                  ? `${player.finishTime.toFixed(1)}s`
-                  : 'DNF';
+                const isSurrendered = player.surrendered;
+                const finishTimeDisplay = isSurrendered
+                  ? '🏳️ Surrendered'
+                  : player.finishTime 
+                    ? `${player.finishTime.toFixed(1)}s`
+                    : 'DNF';
                 
                 return (
                   <TableRow 
                     key={player.id}
                     className={cn(
                       "transition-colors hover:bg-muted/50",
-                      isWinner && "bg-primary/10 border-l-4 border-l-primary"
+                      isWinner && "bg-primary/10 border-l-4 border-l-primary",
+                      isSurrendered && "opacity-60"
                     )}
                   >
                     <TableCell className="font-bold text-xl text-center">
-                      {index === 0 && <Crown className="inline-block h-6 w-6 text-amber-400 mr-1 animate-pulse" />}
-                      {index === 1 && <span className="text-slate-400 mr-1">🥈</span>}
-                      {index === 2 && <span className="text-amber-600 mr-1">🥉</span>}
+                      {!isSurrendered && index === 0 && <Crown className="inline-block h-6 w-6 text-amber-400 mr-1 animate-pulse" />}
+                      {!isSurrendered && index === 1 && <span className="text-slate-400 mr-1">🥈</span>}
+                      {!isSurrendered && index === 2 && <span className="text-amber-600 mr-1">🥉</span>}
                       {index + 1}
                     </TableCell>
                     <TableCell className="text-left">
                       <div className="flex flex-col">
                         <span className={cn(
                           "font-medium",
-                          isWinner && "font-bold text-primary"
+                          isWinner && "font-bold text-primary",
+                          isSurrendered && "text-muted-foreground line-through"
                         )}>
                           {player.name}
                         </span>
                         {player.id === localPlayerId && (
                           <span className="text-xs text-muted-foreground">(You)</span>
                         )}
+                        {isSurrendered && (
+                          <span className="text-xs text-orange-500">Gave up</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-col items-center">
-                        <span className="text-primary font-bold text-lg">{player.wpm}</span>
+                        <span className={cn(
+                          "font-bold text-lg",
+                          isSurrendered ? "text-muted-foreground" : "text-primary"
+                        )}>
+                          {player.wpm}
+                        </span>
                         <span className="text-xs text-muted-foreground">words/min</span>
                       </div>
                     </TableCell>
@@ -219,6 +271,7 @@ export default function GameResults({
                       <div className="flex flex-col items-center">
                         <span className={cn(
                           "font-bold text-lg",
+                          isSurrendered ? "text-muted-foreground" : 
                           player.accuracy >= 95 ? "text-accent" : "text-foreground"
                         )}>
                           {player.accuracy}%
@@ -227,11 +280,17 @@ export default function GameResults({
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="font-mono text-sm">{finishTimeDisplay}</span>
+                      <span className={cn(
+                        "font-mono text-sm",
+                        isSurrendered && "text-orange-500 font-semibold"
+                      )}>
+                        {finishTimeDisplay}
+                      </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={cn(
                         "font-bold text-xl",
+                        isSurrendered ? "text-muted-foreground" :
                         isWinner && "text-primary neon-text"
                       )}>
                         {Math.round(player.score)}
@@ -289,7 +348,7 @@ export default function GameResults({
                   Play Again
                 </Button>
                 <Button
-                  onClick={() => handleVoteRematch(false)}
+                  onClick={handleLeave}
                   variant="secondary"
                   size="lg"
                   className="flex-1"
@@ -299,11 +358,21 @@ export default function GameResults({
                 </Button>
               </div>
             ) : (
-              <p className="text-center w-full text-muted-foreground">
-                {localPlayerVoted 
-                  ? "Waiting for other players to vote..."
-                  : "You&apos;ve declined the rematch."}
-              </p>
+              <div className="w-full text-center">
+                <p className="text-muted-foreground mb-4">
+                  {localPlayerVoted 
+                    ? "Waiting for other players to vote..."
+                    : "You&apos;ve declined the rematch."}
+                </p>
+                <Button
+                  onClick={handleLeave}
+                  variant="outline"
+                  size="sm"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Leave to Waiting Room
+                </Button>
+              </div>
             )}
           </>
         )}

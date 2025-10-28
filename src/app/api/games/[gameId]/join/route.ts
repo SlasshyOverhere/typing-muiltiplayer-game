@@ -16,15 +16,20 @@ export async function POST(
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
-    if (Object.keys(game.players).length >= 3) {
+    // Check password for private rooms
+    const { playerName, password } = await request.json();
+    
+    if (game.password && game.password !== password) {
+      return NextResponse.json({ error: 'Incorrect password' }, { status: 401 });
+    }
+
+    if (Object.keys(game.players).length >= game.maxPlayers) {
       return NextResponse.json({ error: 'Room is full' }, { status: 400 });
     }
 
     if (game.gameState !== 'waiting') {
       return NextResponse.json({ error: 'Game already started' }, { status: 400 });
     }
-
-    const { playerName } = await request.json();
 
     if (!playerName) {
       return NextResponse.json({ error: 'Player name required' }, { status: 400 });

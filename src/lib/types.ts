@@ -10,6 +10,7 @@ export type Player = {
   score: number;
   finishTime: number | null; // in seconds
   wantsRematch?: boolean; // For rematch voting
+  surrendered?: boolean; // If player surrendered during game
 };
 
 export type Game = {
@@ -22,4 +23,7 @@ export type Game = {
   winnerId?: string;
   startTime?: Date | string | null;
   rematchVotes?: Record<string, boolean>; // Track rematch votes
+  password?: string; // Optional password for private rooms
+  isPublic: boolean; // true for matchmaking, false for private rooms
+  maxPlayers: number; // Maximum players allowed (default 20)
 };

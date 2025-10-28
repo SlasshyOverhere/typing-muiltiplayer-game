@@ -24,7 +24,7 @@ import type { Player } from '@/lib/types';
 import { Copy, Crown, Loader2, User, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { disbandGame } from '@/app/actions';
+import { API_URL } from '@/lib/api-config';
 
 interface GameLobbyProps {
   players: Player[];
@@ -51,6 +51,14 @@ export default function GameLobby({
     });
   };
 
+  const handleCopyRoomCode = () => {
+    navigator.clipboard.writeText(roomId);
+    toast({
+      title: 'Room Code Copied!',
+      description: 'Share this code with your friends: ' + roomId,
+    });
+  };
+
   const handleStart = async () => {
     setIsStarting(true);
     try {
@@ -66,11 +74,25 @@ export default function GameLobby({
 
   const handleDisband = async () => {
     try {
-      await disbandGame(roomId);
-      toast({
-        title: 'Room Disbanded',
-        description: 'The game room has been deleted.',
+      const response = await fetch(`${API_URL}/api/games/${roomId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to disband game');
+      }
+
+      toast({
+        title: 'Room Disbanded Successfully!',
+        description: 'All players have been sent back to the waiting room.',
+        duration: 5000,
+      });
+
+      // Wait 3 seconds then redirect
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
     } catch (e) {
       toast({
         title: "Couldn't disband room",
@@ -91,22 +113,38 @@ export default function GameLobby({
               Waiting for players to join...
             </CardDescription>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Share Link</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleCopyLink}
-              className="mt-1 gap-2 font-mono text-xs neon-border"
-            >
-              <Copy className="h-4 w-4" />
-              Copy Link
-            </Button>
+          <div className="text-right space-y-2">
+            <div>
+              <p className="text-sm text-muted-foreground">Room Code</p>
+              <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 mt-1 flex items-center justify-between">
+                <span className="font-mono text-lg font-bold text-primary">{roomId}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyRoomCode}
+                  className="h-6 w-6 p-0 hover:bg-primary/20"
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Share Link</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCopyLink}
+                className="mt-1 gap-2 font-mono text-xs neon-border"
+              >
+                <Copy className="h-4 w-4" />
+                Copy Link
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <h3 className="mb-4 text-lg font-semibold">Players ({players.length}/3)</h3>
+        <h3 className="mb-4 text-lg font-semibold">Players ({players.length}/20)</h3>
         <div className="space-y-3">
           {players.map((player) => (
             <div

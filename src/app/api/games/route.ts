@@ -3,7 +3,7 @@ import { storage } from '@/lib/storage';
 import type { Game, Player } from '@/lib/types';
 import { randomUUID } from 'crypto';
 
-const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+const generateId = () => Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit number (1000-9999)
 
 // GET /api/games?id=ROOMID - Get game by ID
 export async function GET(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { playerName } = body;
+    const { playerName, password, isPublic = false } = body;
 
     if (!playerName) {
       return NextResponse.json({ error: 'Player name required' }, { status: 400 });
@@ -54,6 +54,9 @@ export async function POST(request: NextRequest) {
       players: { [playerId]: newPlayer },
       textSnippet: 'The quick brown fox jumps over the lazy dog.',
       createdAt: new Date().toISOString(),
+      password: password || undefined,
+      isPublic: isPublic,
+      maxPlayers: 20,
     };
 
     await storage.setGame(roomId, newGame);

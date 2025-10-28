@@ -42,14 +42,55 @@ export default function TypingGame({
 
   const handleDisband = async () => {
     try {
-      await disbandGame(game.id);
-      toast({
-        title: 'Room Disbanded',
-        description: 'The game room has been deleted.',
+      const response = await fetch(`${API_URL}/api/games/${game.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to disband game');
+      }
+
+      toast({
+        title: 'Room Disbanded Successfully!',
+        description: 'All players have been sent back to the waiting room.',
+        duration: 5000,
+      });
+
+      // Wait 3 seconds then redirect
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
     } catch (e) {
       toast({
         title: "Couldn't disband room",
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSurrender = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/games/${game.id}/surrender`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: localPlayerId }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to surrender');
+      }
+      
+      toast({
+        title: 'You Surrendered',
+        description: 'Game ended. Showing results...',
+      });
+      
+      // Force a page refresh to show results immediately
+      window.location.reload();
+    } catch (e) {
+      toast({
+        title: "Couldn't surrender",
         variant: 'destructive',
       });
     }
@@ -234,6 +275,7 @@ export default function TypingGame({
           </div>
           <div className="space-y-3">
             {Object.values(game.players)
+              .filter(player => !player.surrendered) // Only show active players
               .sort((a, b) => b.progress - a.progress) // Sort by progress (leader first)
               .map((player, index) => (
                 <div key={player.id} className="space-y-1">
@@ -249,6 +291,22 @@ export default function TypingGame({
                   )}
                 </div>
               ))}
+            
+            {/* Show surrendered players separately */}
+            {Object.values(game.players).some(p => p.surrendered) && (
+              <div className="mt-4 pt-3 border-t border-muted">
+                <p className="text-xs text-muted-foreground mb-2">Surrendered:</p>
+                {Object.values(game.players)
+                  .filter(player => player.surrendered)
+                  .map((player) => (
+                    <div key={player.id} className="flex items-center gap-2 text-sm text-orange-500 opacity-70">
+                      <span>🏳️</span>
+                      <span className="line-through">{player.name}</span>
+                      <span className="text-xs">(Gave up)</span>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -270,6 +328,39 @@ export default function TypingGame({
               <div className="text-3xl font-bold text-foreground">{Math.round(progress)}%</div>
             </div>
           </div>
+          
+          {/* Surrender Button */}
+          {!game.players[localPlayerId]?.surrendered && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-orange-500 border-orange-500 hover:bg-orange-500/10 hover:text-orange-400"
+                >
+                  🏳️ Surrender
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Give up?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to surrender? You will not receive any score,
+                    and the game will end if you&apos;re the last active player.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Fighting!</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleSurrender}
+                    className="bg-orange-500 text-white hover:bg-orange-600"
+                  >
+                    Yes, Surrender
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </CardHeader>
       <CardContent className="relative min-h-[300px]" onClick={() => inputRef.current?.focus()}>
         <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">

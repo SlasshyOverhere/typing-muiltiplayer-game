@@ -117,7 +117,19 @@ export default function GameContainer({
   }
 
   if (error) {
-    notFound();
+    return (
+      <Card className="w-full max-w-md text-center">
+        <CardHeader>
+          <CardTitle className="text-destructive">Room Disbanded</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>The host has disbanded this room. All players have been sent back to the waiting room.</p>
+          <Button onClick={() => router.push('/')} className="mt-4">
+            <Home className="mr-2 h-4 w-4" /> Go to Waiting Room
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!game) return null;

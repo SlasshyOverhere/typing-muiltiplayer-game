@@ -1,163 +1,154 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.js
 .yarn/install-state.gz
 
-# testing
-/coverage
+# Testing
+coverage/
 
-# next.js
-/.next/
-/out/
+# Next.js
+.next/
+out/
 
-# production
-/build
+# Production builds
+build/
+dist/
 
-# misc
-.DS_Store
-*.pem
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
 
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
-.env
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# vercel
-.vercel
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
 
-# typescript
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
 *.tsbuildinfo
 next-env.d.ts
 
-# IDE
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-*CHANGELOG.md
-*IMPROVEMENTS.md    
 
-# package-lock.json
-package-lock.json
-# QUICKSTART.md
-QUICKSTART.md
-# SETUP.md
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Documentation files (exclude from git)
+*.md
+!package.json
+!package-lock.json
+
+# Specific documentation files to ignore
+README.md
+QUICK_START.md
+RENDER_DEPLOYMENT.md
+VERCEL_SETUP_GUIDE.md
+BACKEND_COMPLETE.md
+INTEGRATION_COMPLETE.md
+DEPLOYMENT_STEPS.md
+NEW_FEATURES.md
+FEATURES.md
 SETUP.md
-# README.md
-README.md   
-# LICENSE
-LICENSE
-# CODE_OF_CONDUCT.md
-CODE_OF_CONDUCT.md
-# CONTRIBUTING.md
-CONTRIBUTING.md
-# SECURITY.md
-SECURITY.md
-# SUPPORT.md
-SUPPORT.md
-# CHANGELOG.md
+QUICKSTART.md
 CHANGELOG.md
-# IMPROVEMENTS.md
 IMPROVEMENTS.md
-# QUICKSTART.md
-QUICKSTART.md
-# SETUP.md
-SETUP.md
-# README.md
-README.md   
+LICENSE
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+SUPPORT.md
 
-# .env.local
-.env.local
-# .env
-.env
-# .env.development.local
-.env.development.local
-# .env.test.local
-.env.test.local
-# .env.production.local
-.env.production.local
-# .env.development
-.env.development        
+# Backend specific
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/logs/
+backend/temp/
 
-# .env.test
-.env.test
-# .env.production
-.env.production
-# .env.local
-.env.local
-# .env.development.local
-.env.development.local
-# .env.test.local
-.env.test.local
-# .env.production.local
-.env.production.local   
-
-# .env.local
-.env.local
-# .env.development.local
-.env.development.local
-# .env.test.local
-.env.test.local
-# .env.production.local
-.env.production.local   
-
-# .env.local
-.env.local
-# .env.development.local
-.env.development.local  
-
-# .env.local
-.env.local
-# .env.development.local
-.env.development.local
-# .env.test.local
-.env.test.local
-# .env.production.local
-.env.production.local   
-
-# .env.local
-.env.local
-# .env.development.local
-.env.development.local          
-
-*SETUP.md
-*QUICKSTART.md
-*README.md
-*CHANGELOG.md
-*IMPROVEMENTS.md
-*LICENSE
-*CODE_OF_CONDUCT.md
-*CONTRIBUTING.md
-*SECURITY.md
-*SUPPORT.md
-*CHANGELOG.md
-*IMPROVEMENTS.md
-
-*CODE_OF_CONDUCT.md
-*CONTRIBUTING.md
-*SECURITY.md
-*SUPPORT.md
-*CHANGELOG.md
-*IMPROVEMENTS.md
-*LICENSE
-*QUICKSTART.md
-*SETUP.md
-
-*CHANGELOG.md
-*IMPROVEMENTS.md
-*NEW_FEATURES.md
-*QUICKSTART.md
-*SETUP.md
-*VERCEL_SETUP_GUIDE.md
-*BACKEND_COMPLETE.md
-*QUICKSTART.md
-*INTEGRATION_COMPLETE.md
-*DEPLOYMENT_STEPS.md
+# Frontend specific
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
