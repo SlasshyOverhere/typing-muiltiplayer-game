@@ -128,7 +128,7 @@ export default function Home() {
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(199,125,255,0.3),rgba(255,255,255,0))]"></div>
       <div className="text-center mb-8 z-10">
         <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tighter text-primary neon-text">
-          Type Royale
+          Slasshy Typing Challenge
         </h1>
         <p className="text-muted-foreground mt-2 text-lg">
           The ultimate multiplayer typing challenge.

@@ -93,53 +93,94 @@ export default function GameResults({
     
     setIsDownloading(true);
     try {
-      // Capture the card as a canvas with high quality settings
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#0a0a0a', // Dark background
-        scale: 3, // Very high quality (3x)
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
-        width: cardRef.current.offsetWidth,
-        height: cardRef.current.offsetHeight,
-        scrollX: 0,
-        scrollY: 0,
+      // Create a simple text-based screenshot instead of html2canvas
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size
+      canvas.width = 800;
+      canvas.height = 600;
+      
+      // Fill background
+      ctx!.fillStyle = '#0a0a0a';
+      ctx!.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add border
+      ctx!.strokeStyle = '#8b5cf6';
+      ctx!.lineWidth = 2;
+      ctx!.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      
+      // Title
+      ctx!.fillStyle = '#8b5cf6';
+      ctx!.font = 'bold 32px Arial';
+      ctx!.textAlign = 'center';
+      ctx!.fillText('Slasshy Typing Challenge', canvas.width / 2, 60);
+      
+      // Subtitle
+      ctx!.fillStyle = '#a1a1aa';
+      ctx!.font = '16px Arial';
+      ctx!.fillText('Game Results', canvas.width / 2, 90);
+      
+      // Winner
+      if (winner) {
+        ctx!.fillStyle = '#fbbf24';
+        ctx!.font = 'bold 24px Arial';
+        ctx!.fillText(`Winner: ${winner.name}`, canvas.width / 2, 140);
+      } else {
+        ctx!.fillStyle = '#a1a1aa';
+        ctx!.font = 'bold 24px Arial';
+        ctx!.fillText(players.some(p => p.surrendered) && !players.some(p => !p.surrendered) 
+          ? "Everyone surrendered - No winner!" 
+          : "It's a draw!", canvas.width / 2, 140);
+      }
+      
+      // Player results
+      let yPos = 200;
+      const sortedPlayers = players.sort((a, b) => b.score - a.score);
+      
+      ctx!.fillStyle = '#ffffff';
+      ctx!.font = 'bold 18px Arial';
+      ctx!.textAlign = 'left';
+      ctx!.fillText('Player Rankings:', 50, yPos);
+      yPos += 30;
+      
+      sortedPlayers.forEach((player, index) => {
+        const isSurrendered = player.surrendered;
+        const color = isSurrendered ? '#f97316' : index === 0 ? '#fbbf24' : '#ffffff';
+        
+        ctx!.fillStyle = color;
+        ctx!.font = isSurrendered ? 'italic 16px Arial' : '16px Arial';
+        
+        const rank = index + 1;
+        const name = isSurrendered ? `${player.name} (Surrendered)` : player.name;
+        const score = isSurrendered ? '0' : player.score.toString();
+        const wpm = isSurrendered ? '0' : Math.round(player.wpm).toString();
+        const accuracy = isSurrendered ? '0%' : `${Math.round(player.accuracy)}%`;
+        
+        ctx!.fillText(`${rank}. ${name}`, 50, yPos);
+        ctx!.textAlign = 'right';
+        ctx!.fillText(`Score: ${score} | WPM: ${wpm} | Accuracy: ${accuracy}`, canvas.width - 50, yPos);
+        ctx!.textAlign = 'left';
+        yPos += 25;
       });
       
-      // Create a new canvas with watermark
-      const finalCanvas = document.createElement('canvas');
-      const ctx = finalCanvas.getContext('2d');
-      
-      // Set final canvas size (add space for watermark)
-      finalCanvas.width = canvas.width + 40;
-      finalCanvas.height = canvas.height + 80;
-      
-      // Fill with dark background
-      ctx!.fillStyle = '#0a0a0a';
-      ctx!.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-      
-      // Draw the main content
-      ctx!.drawImage(canvas, 20, 20);
-      
-      // Add watermark
-      ctx!.fillStyle = '#8b5cf6'; // Purple color
-      ctx!.font = 'bold 24px Arial';
+      // Footer
+      ctx!.fillStyle = '#8b5cf6';
+      ctx!.font = 'bold 20px Arial';
       ctx!.textAlign = 'center';
-      ctx!.fillText('Type Royale', finalCanvas.width / 2, finalCanvas.height - 20);
+      ctx!.fillText('Slasshy Typing Challenge', canvas.width / 2, canvas.height - 40);
       
-      // Add subtitle
       ctx!.fillStyle = '#a1a1aa';
       ctx!.font = '14px Arial';
-      ctx!.fillText('Multiplayer Typing Challenge', finalCanvas.width / 2, finalCanvas.height - 5);
+      ctx!.fillText('Multiplayer Typing Game', canvas.width / 2, canvas.height - 15);
       
-      // Convert to blob and download
-      finalCanvas.toBlob((blob) => {
+      // Download
+      canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-          link.download = `type-royale-results-${timestamp}.png`;
+          link.download = `slasshy-typing-results-${timestamp}.png`;
           link.href = url;
           link.click();
           URL.revokeObjectURL(url);
@@ -149,7 +190,7 @@ export default function GameResults({
             description: 'Your game results have been downloaded as a high-quality PNG.',
           });
         }
-      }, 'image/png', 1.0); // Maximum quality
+      }, 'image/png', 1.0);
     } catch (error) {
       console.error('Screenshot error:', error);
       toast({
@@ -163,7 +204,7 @@ export default function GameResults({
   };
 
   return (
-    <Card ref={cardRef} className="w-full text-center animate-fade-in neon-glow">
+    <Card ref={cardRef} data-screenshot-target className="w-full text-center animate-fade-in neon-glow">
       <CardHeader>
         <div className="flex justify-end mb-2">
           <Button
@@ -301,11 +342,6 @@ export default function GameResults({
               })}
             </TableBody>
           </Table>
-        </div>
-        <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-primary/20">
-          <p className="text-sm text-center text-muted-foreground">
-            <span className="font-semibold">Score Formula:</span> WPM × (Accuracy/100)² — Rewards both speed and accuracy!
-          </p>
         </div>
       </CardContent>
       <CardFooter className="flex-col gap-4">

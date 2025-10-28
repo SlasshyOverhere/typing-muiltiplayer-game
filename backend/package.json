@@ -1,7 +1,7 @@
 {
   "name": "type-royale-backend",
   "version": "1.0.0",
-  "description": "Express backend for Type Royale game",
+  "description": "Express backend for Slasshy Typing Challenge game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

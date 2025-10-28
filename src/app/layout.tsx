@@ -11,7 +11,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Type Royale',
+  title: 'Slasshy Typing Challenge',
   description: 'A competitive multiplayer typing speed game for you and your friends.',
   icons: [{ rel: 'icon', url: '/icon.svg' }],
 };

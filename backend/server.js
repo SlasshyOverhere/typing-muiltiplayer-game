@@ -483,7 +483,7 @@ app.delete('/api/games/:gameId', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Type Royale Backend running on port ${PORT}`);
+  console.log(`🚀 Slasshy Typing Challenge Backend running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 });
 
