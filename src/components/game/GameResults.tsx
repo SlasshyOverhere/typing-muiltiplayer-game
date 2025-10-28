@@ -155,7 +155,7 @@ export default function GameResults({
             </CardDescription>
           ) : (
             <CardDescription className="text-xl mt-2">
-              It's a draw!
+              It&apos;s a draw!
             </CardDescription>
           )}
         </div>
@@ -301,7 +301,7 @@ export default function GameResults({
               <p className="text-center w-full text-muted-foreground">
                 {localPlayerVoted 
                   ? "Waiting for other players to vote..."
-                  : "You've declined the rematch."}
+                  : "You&apos;ve declined the rematch."}
               </p>
             )}
           </>

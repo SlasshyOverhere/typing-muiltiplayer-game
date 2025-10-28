@@ -18,7 +18,7 @@ export default function NotFound() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            The game room you're looking for doesn't exist or may have been deleted.
+            The game room you&apos;re looking for doesn&apos;t exist or may have been deleted.
           </p>
           <Button asChild className="mt-6">
             <Link href="/">
