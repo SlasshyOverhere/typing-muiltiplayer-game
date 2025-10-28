@@ -8,7 +8,7 @@ export async function POST(
 ) {
   try {
     const { gameId } = await params;
-    const game = storage.getGame(gameId);
+    const game = await storage.getGame(gameId);
 
     if (!game) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -33,7 +33,7 @@ export async function POST(
     game.rematchVotes = {};
     game.startTime = null;
 
-    storage.setGame(gameId, game);
+    await storage.setGame(gameId, game);
 
     return NextResponse.json(game);
   } catch (error) {

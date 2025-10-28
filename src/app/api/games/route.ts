@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Game ID required' }, { status: 400 });
   }
 
-  const game = storage.getGame(gameId);
+  const game = await storage.getGame(gameId);
 
   if (!game) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    storage.setGame(roomId, newGame);
+    await storage.setGame(roomId, newGame);
 
     return NextResponse.json({ roomId, playerId, game: newGame });
   } catch (error) {

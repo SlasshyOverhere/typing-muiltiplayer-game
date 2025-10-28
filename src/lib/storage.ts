@@ -1,58 +1,123 @@
-// In-memory storage for game state
-// Note: This resets on server restart. For production, use Vercel KV or a database
+// Storage abstraction layer
+// Automatically uses Vercel KV in production, in-memory for development
 
 import type { Game } from './types';
+import { kv } from '@vercel/kv';
 
-// Use global to ensure the Map persists across hot reloads in development
+// Check if we're in production with Vercel KV configured
+const isProduction = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
+
+// Fallback in-memory storage for development
 const globalForGames = global as typeof global & {
   games: Map<string, Game>;
 };
+const memoryGames = globalForGames.games || new Map<string, Game>();
+globalForGames.games = memoryGames;
 
-// Store games in memory
-const games = globalForGames.games || new Map<string, Game>();
-globalForGames.games = games;
+// Key prefix for KV storage
+const GAME_PREFIX = 'game:';
+const GAME_TTL = 24 * 60 * 60; // 24 hours in seconds
 
 export const storage = {
   // Get a game by ID
-  getGame: (gameId: string): Game | null => {
-    console.log('[Storage] Getting game:', gameId, 'Total games:', games.size, 'All game IDs:', Array.from(games.keys()));
-    return games.get(gameId) || null;
+  getGame: async (gameId: string): Promise<Game | null> => {
+    if (isProduction) {
+      try {
+        const game = await kv.get<Game>(`${GAME_PREFIX}${gameId}`);
+        console.log('[Storage-KV] Getting game:', gameId, 'Found:', !!game);
+        return game;
+      } catch (error) {
+        console.error('[Storage-KV] Error getting game:', error);
+        return null;
+      }
+    } else {
+      console.log('[Storage-Memory] Getting game:', gameId, 'Total games:', memoryGames.size);
+      return memoryGames.get(gameId) || null;
+    }
   },
 
   // Create or update a game
-  setGame: (gameId: string, game: Game): void => {
-    console.log('[Storage] Setting game:', gameId);
-    games.set(gameId, game);
-    console.log('[Storage] After set - Total games:', games.size, 'All game IDs:', Array.from(games.keys()));
+  setGame: async (gameId: string, game: Game): Promise<void> => {
+    if (isProduction) {
+      try {
+        await kv.set(`${GAME_PREFIX}${gameId}`, game, { ex: GAME_TTL });
+        console.log('[Storage-KV] Set game:', gameId);
+      } catch (error) {
+        console.error('[Storage-KV] Error setting game:', error);
+        throw error;
+      }
+    } else {
+      console.log('[Storage-Memory] Setting game:', gameId);
+      memoryGames.set(gameId, game);
+    }
   },
 
   // Delete a game
-  deleteGame: (gameId: string): void => {
-    games.delete(gameId);
+  deleteGame: async (gameId: string): Promise<void> => {
+    if (isProduction) {
+      try {
+        await kv.del(`${GAME_PREFIX}${gameId}`);
+        console.log('[Storage-KV] Deleted game:', gameId);
+      } catch (error) {
+        console.error('[Storage-KV] Error deleting game:', error);
+        throw error;
+      }
+    } else {
+      console.log('[Storage-Memory] Deleting game:', gameId);
+      memoryGames.delete(gameId);
+    }
   },
 
   // Check if game exists
-  hasGame: (gameId: string): boolean => {
-    return games.has(gameId);
-  },
-
-  // Get all games (for debugging)
-  getAllGames: () => {
-    return Array.from(games.values());
-  },
-
-  // Clean up old games (optional, run periodically)
-  cleanupOldGames: (maxAgeMs: number = 24 * 60 * 60 * 1000) => {
-    const now = Date.now();
-    for (const [id, game] of games.entries()) {
-      const createdAt = game.createdAt instanceof Date 
-        ? game.createdAt.getTime() 
-        : new Date(game.createdAt).getTime();
-      
-      if (now - createdAt > maxAgeMs) {
-        games.delete(id);
+  hasGame: async (gameId: string): Promise<boolean> => {
+    if (isProduction) {
+      try {
+        const exists = await kv.exists(`${GAME_PREFIX}${gameId}`);
+        return exists === 1;
+      } catch (error) {
+        console.error('[Storage-KV] Error checking game existence:', error);
+        return false;
       }
+    } else {
+      return memoryGames.has(gameId);
     }
+  },
+
+  // Get all games (for debugging - use sparingly in production)
+  getAllGames: async (): Promise<Game[]> => {
+    if (isProduction) {
+      try {
+        const keys = await kv.keys(`${GAME_PREFIX}*`);
+        const games: Game[] = [];
+        for (const key of keys) {
+          const game = await kv.get<Game>(key);
+          if (game) games.push(game);
+        }
+        return games;
+      } catch (error) {
+        console.error('[Storage-KV] Error getting all games:', error);
+        return [];
+      }
+    } else {
+      return Array.from(memoryGames.values());
+    }
+  },
+
+  // Clean up old games (KV auto-expires, this is for memory mode)
+  cleanupOldGames: async (maxAgeMs: number = 24 * 60 * 60 * 1000): Promise<void> => {
+    if (!isProduction) {
+      const now = Date.now();
+      for (const [id, game] of memoryGames.entries()) {
+        const createdAt = game.createdAt instanceof Date 
+          ? game.createdAt.getTime() 
+          : new Date(game.createdAt).getTime();
+        
+        if (now - createdAt > maxAgeMs) {
+          memoryGames.delete(id);
+        }
+      }
+      console.log('[Storage-Memory] Cleanup complete. Games remaining:', memoryGames.size);
+    }
+    // KV games auto-expire, no cleanup needed
   }
 };
-

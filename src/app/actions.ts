@@ -37,14 +37,14 @@ export async function createGame(playerName: string) {
   };
 
   console.log('[CreateGame] Storing game:', roomId);
-  storage.setGame(roomId, newGame);
+  await storage.setGame(roomId, newGame);
   
   console.log('[CreateGame] Redirecting to:', `/game/${roomId}?playerId=${playerId}`);
   redirect(`/game/${roomId}?playerId=${playerId}`);
 }
 
 export async function joinGame(roomId: string, playerName: string) {
-  const game = storage.getGame(roomId);
+  const game = await storage.getGame(roomId);
 
   if (!game) {
     throw new Error('Game not found.');
@@ -72,7 +72,7 @@ export async function joinGame(roomId: string, playerName: string) {
   };
 
   game.players[playerId] = newPlayer;
-  storage.setGame(roomId, game);
+  await storage.setGame(roomId, game);
   
   revalidatePath(`/game/${roomId}`);
   redirect(`/game/${roomId}?playerId=${playerId}`);
@@ -81,7 +81,7 @@ export async function joinGame(roomId: string, playerName: string) {
 export async function joinGameClient(roomId: string, playerName: string): Promise<string> {
   console.log('[JoinGameClient] Attempting to join game:', roomId, 'with name:', playerName);
   
-  const game = storage.getGame(roomId);
+  const game = await storage.getGame(roomId);
 
   if (!game) {
     throw new Error('Game not found.');
@@ -111,7 +111,7 @@ export async function joinGameClient(roomId: string, playerName: string): Promis
   console.log('[JoinGameClient] Adding player:', playerId, 'to game:', roomId);
   
   game.players[playerId] = newPlayer;
-  storage.setGame(roomId, game);
+  await storage.setGame(roomId, game);
   
   console.log('[JoinGameClient] Player joined successfully');
   
@@ -132,7 +132,7 @@ const TEXT_SNIPPETS = [
 ];
 
 export async function startGame(roomId: string) {
-  const game = storage.getGame(roomId);
+  const game = await storage.getGame(roomId);
 
   if (!game) {
     throw new Error('Game not found');
@@ -145,15 +145,15 @@ export async function startGame(roomId: string) {
   game.gameState = 'countdown';
   game.startTime = new Date().toISOString();
 
-  storage.setGame(roomId, game);
+  await storage.setGame(roomId, game);
 
   // Auto-transition to playing after 4 seconds
-  setTimeout(() => {
-    const currentGame = storage.getGame(roomId);
+  setTimeout(async () => {
+    const currentGame = await storage.getGame(roomId);
     if (currentGame && currentGame.gameState === 'countdown') {
       currentGame.gameState = 'playing';
       currentGame.startTime = new Date().toISOString();
-      storage.setGame(roomId, currentGame);
+      await storage.setGame(roomId, currentGame);
     }
   }, 4000);
 
@@ -161,7 +161,7 @@ export async function startGame(roomId: string) {
 }
 
 export async function resetGame(roomId: string) {
-  const game = storage.getGame(roomId);
+  const game = await storage.getGame(roomId);
   
   if (!game) {
     throw new Error('Game not found');
@@ -186,7 +186,7 @@ export async function resetGame(roomId: string) {
   game.rematchVotes = {};
   game.startTime = null;
 
-  storage.setGame(roomId, game);
+  await storage.setGame(roomId, game);
   
   revalidatePath(`/game/${roomId}`);
 }
@@ -194,14 +194,14 @@ export async function resetGame(roomId: string) {
 export async function disbandGame(roomId: string) {
   console.log('[DisbandGame] Disbanding game:', roomId);
   
-  const game = storage.getGame(roomId);
+  const game = await storage.getGame(roomId);
   
   if (!game) {
     throw new Error('Game not found');
   }
 
   // Delete the game from storage
-  storage.deleteGame(roomId);
+  await storage.deleteGame(roomId);
   
   console.log('[DisbandGame] Game deleted:', roomId);
   

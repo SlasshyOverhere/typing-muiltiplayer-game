@@ -8,7 +8,7 @@ export async function PATCH(
 ) {
   try {
     const { gameId } = await params;
-    const game = storage.getGame(gameId);
+    const game = await storage.getGame(gameId);
 
     if (!game) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -26,7 +26,7 @@ export async function PATCH(
       ...updates,
     };
 
-    storage.setGame(gameId, game);
+    await storage.setGame(gameId, game);
 
     return NextResponse.json(game);
   } catch (error) {

@@ -26,7 +26,7 @@ export async function POST(
 ) {
   try {
     const { gameId } = await params;
-    const game = storage.getGame(gameId);
+    const game = await storage.getGame(gameId);
 
     if (!game) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -39,15 +39,15 @@ export async function POST(
     game.gameState = 'countdown';
     game.startTime = new Date().toISOString();
 
-    storage.setGame(gameId, game);
+    await storage.setGame(gameId, game);
 
     // Auto-transition to playing after 4 seconds
-    setTimeout(() => {
-      const currentGame = storage.getGame(gameId);
+    setTimeout(async () => {
+      const currentGame = await storage.getGame(gameId);
       if (currentGame && currentGame.gameState === 'countdown') {
         currentGame.gameState = 'playing';
         currentGame.startTime = new Date().toISOString();
-        storage.setGame(gameId, currentGame);
+        await storage.setGame(gameId, currentGame);
       }
     }, 4000);
 

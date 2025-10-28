@@ -10,7 +10,7 @@ export async function POST(
 ) {
   try {
     const { gameId } = await params;
-    const game = storage.getGame(gameId);
+    const game = await storage.getGame(gameId);
 
     if (!game) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -44,7 +44,7 @@ export async function POST(
     };
 
     game.players[playerId] = newPlayer;
-    storage.setGame(gameId, game);
+    await storage.setGame(gameId, game);
 
     return NextResponse.json({ playerId, game });
   } catch (error) {

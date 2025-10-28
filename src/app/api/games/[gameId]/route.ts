@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ gameId: string }> }
 ) {
   const { gameId } = await params;
-  const game = storage.getGame(gameId);
+  const game = await storage.getGame(gameId);
 
   if (!game) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -24,7 +24,7 @@ export async function PATCH(
 ) {
   try {
     const { gameId } = await params;
-    const game = storage.getGame(gameId);
+    const game = await storage.getGame(gameId);
 
     if (!game) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
@@ -41,7 +41,7 @@ export async function PATCH(
       rematchVotes: updates.rematchVotes !== undefined ? updates.rematchVotes : game.rematchVotes,
     };
 
-    storage.setGame(gameId, updatedGame);
+    await storage.setGame(gameId, updatedGame);
 
     return NextResponse.json(updatedGame);
   } catch (error) {
@@ -55,7 +55,7 @@ export async function DELETE(
   { params }: { params: Promise<{ gameId: string }> }
 ) {
   const { gameId } = await params;
-  storage.deleteGame(gameId);
+  await storage.deleteGame(gameId);
   return NextResponse.json({ success: true });
 }
 
